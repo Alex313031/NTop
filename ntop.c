@@ -493,6 +493,8 @@ static void SortProcessList(void)
 		case SORT_BY_DISK_USAGE:
 			SortFn = SortProcessByDiskUsage;
 			break;
+		default:
+			break;
 		}
 
 		if(SortFn) {
@@ -741,7 +743,7 @@ static void PollProcessList(DWORD UpdateTime)
     if (FilterByName) {
       BOOL InFilter = FALSE;
       for(DWORD NameIndex = 0; NameIndex < NameFilterCount; NameIndex++) {
-        if(strstr(Process.ExeName, NameFilterList[NameIndex]) != NULL) {
+        if(_tcsstr(Process.ExeName, NameFilterList[NameIndex]) != NULL) {
           InFilter = TRUE;
         }
       }
