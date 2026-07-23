@@ -1,0 +1,62 @@
+name: NTop Legacy Windows Build
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+# Cancel a superseded run when new commits are pushed to the same branch/PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Least privilege: only checkout needs the token. Artifact upload uses the
+# runtime token, not GITHUB_TOKEN scopes. Widen to contents:write only if this
+# workflow later publishes releases.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build NTop
+    # Built on Ubuntu 22.04 (glibc 2.35).
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt update
+          # mingw-w64 pulls in the i686 and x86_64 cross compilers, their dev
+          # files, and binutils (windres); make is already on the runner image.
+          sudo apt install -y mingw-w64
+
+      - name: Grab Git Hash
+        # On pull_request the checkout HEAD is an ephemeral merge commit, so take
+        # the PR head SHA from the event; fall back to github.sha for other events.
+        run: |
+          SHA=${{ github.event.pull_request.head.sha || github.sha }}
+          echo "SHA_SHORT=${SHA:0:6}" >> "$GITHUB_ENV"
+
+      - name: Build for Windows x86
+        run: |
+          mkdir -p ./build
+          mkdir -p ./build/x86
+          make CROSS=i686 && mv -fv NTop.exe build/x86/
+
+      - name: Build for Windows x64
+        run: |
+          mkdir -p ./build
+          mkdir -p ./build/x64
+          # Clean first: the x86 step's objects are still in the tree, and make
+          # would relink those i386 objects instead of recompiling for x86_64.
+          make clean
+          make CROSS=x86_64 && mv -fv NTop.exe build/x64/
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ntop_${{ env.SHA_SHORT}}
+          path: build/*
+          if-no-files-found: error
