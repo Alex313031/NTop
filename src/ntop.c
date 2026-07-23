@@ -63,11 +63,11 @@ static int ConPrintf(TCHAR *Fmt, ...)
 	va_list VaList;
 
 	va_start(VaList, Fmt);
-	int CharsWritten = _vstprintf_s(Buffer, _countof(Buffer), Fmt, VaList);
+	int CharsWritten = StrVPrintf(Buffer, _countof(Buffer), Fmt, VaList);
 	va_end(VaList);
 
 	DWORD Dummy;
-	WriteFile(ConsoleHandle, Buffer, CharsWritten, &Dummy, 0);
+	WriteConsole(ConsoleHandle, Buffer, CharsWritten, &Dummy, 0);
 
 	return CharsWritten;
 }
@@ -75,7 +75,7 @@ static int ConPrintf(TCHAR *Fmt, ...)
 static void ConPutc(TCHAR c)
 {
 	DWORD Dummy;
-	WriteFile(ConsoleHandle, &c, 1, &Dummy, 0);
+	WriteConsole(ConsoleHandle, &c, 1, &Dummy, 0);
 }
 
 #define FOREGROUND_WHITE (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE)
@@ -129,13 +129,12 @@ static config MonochromeConfig = {
 static void ParseConfigLine(char *Line)
 {
 	const char *Delimeter = " \t\n";
-	char *Context;
-	char *Key = strtok_s(Line, Delimeter, &Context);
+	char *Key = strtok(Line, Delimeter);
 	if(!Key)
 		return;
 	if(Key[0] == '#') /* Comment char*/
 		return;
-	char *Value = strtok_s(0, Delimeter, &Context);
+	char *Value = strtok(0, Delimeter);
 	if(!Value)
 		return;
 
@@ -171,7 +170,6 @@ static void ParseConfigLine(char *Line)
 static void ReadConfigFile(void)
 {
     FILE *File;
-    errno_t Error;
     char exePath[MAX_PATH];
     char configPath[MAX_PATH];
     
@@ -187,8 +185,8 @@ static void ReadConfigFile(void)
     // Construct config file path
     snprintf(configPath, MAX_PATH, "%s\\ntop.conf", exePath);
     
-    Error = fopen_s(&File, configPath, "r");
-    if(Error != 0) {
+    File = fopen(configPath, "r");
+    if(File == NULL) {
 		OutputDebugStringA("Did not open config file!\n");
         return;
 	}
@@ -572,7 +570,7 @@ static void SearchNext(void);
 
 void StartSearch(const TCHAR *Pattern)
 {
-	_tcsncpy_s(SearchPattern, 256, Pattern, 256);
+	StrCopyN(SearchPattern, 256, Pattern, 256);
 
 	// if the whole string is lower case use case insensitive search
 	CaseInsensitiveSearch = TRUE;
@@ -596,7 +594,7 @@ void StartSearch(const TCHAR *Pattern)
 static BOOLEAN SearchMatchesProcess(const process *Process)
 {
 	TCHAR TempProcessName[MAX_PATH];
-	_tcsncpy_s(TempProcessName, MAX_PATH, Process->ExeName, MAX_PATH);
+	StrCopyN(TempProcessName, MAX_PATH, Process->ExeName, MAX_PATH);
 	if (CaseInsensitiveSearch) // which means that the SearchPattern is already lower case,
 							   // so we convert the process name to lower case to make the
 							   // search case insensitive
@@ -688,8 +686,8 @@ static void PollProcessList(DWORD UpdateTime)
 		Process.BasePriority = Entry.pcPriClassBase;
 		Process.ParentPID = Entry.th32ParentProcessID;
 
-		_tcsncpy_s(Process.ExeName, MAX_PATH, Entry.szExeFile, MAX_PATH);
-		_tcsncpy_s(Process.UserName, UNLEN, _T("SYSTEM"), UNLEN);
+		StrCopyN(Process.ExeName, MAX_PATH, Entry.szExeFile, MAX_PATH);
+		StrCopyN(Process.UserName, UNLEN, _T("SYSTEM"), UNLEN);
 
 		Process.Handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, Entry.th32ProcessID);
 		if(Process.Handle) {
@@ -960,7 +958,7 @@ static void PollSystemInfo(void)
 	UsedPageMemory = TO_MB(MemoryInfo.ullTotalPageFile - MemoryInfo.ullAvailPageFile);
 	UsedPageMemoryPerc = (double)UsedPageMemory / (double)TotalPageMemory;
 
-	UpTime = GetTickCount64();
+	UpTime = CompatGetTickCount64();
 }
 
 static HANDLE ProcessListThread;
@@ -996,7 +994,7 @@ static void FormatTimeString(TCHAR *Buffer, DWORD BufferSize, ULONGLONG MS)
 	int Minutes = (int)(MS / 60000 % 60);
 	int Hours = (int)(MS / 3600000 % 24);
 	int Days = (int)(MS / 86400000);
-	_stprintf_s(Buffer, BufferSize, _T("%02d:%02d:%02d:%02d"), Days, Hours, Minutes, Seconds);
+	StrPrintf(Buffer, BufferSize, _T("%02d:%02d:%02d:%02d"), Days, Hours, Minutes, Seconds);
 }
 
 static void FormatMemoryString(TCHAR *Buffer, DWORD BufferSize, unsigned __int64 Memory)
@@ -1006,19 +1004,19 @@ static void FormatMemoryString(TCHAR *Buffer, DWORD BufferSize, unsigned __int64
 
 	if (Memory < 1000ULL*1000) {
 		Value = Memory / 1000.0;
-		_tcscpy_s(Unit, _countof(Unit), _T("KB"));
+		StrCopy(Unit, _countof(Unit), _T("KB"));
 	} else if (Memory < 1000ULL*1000*1000) {
 		Value = Memory / (1000*1000.0);
-		_tcscpy_s(Unit, _countof(Unit), _T("MB"));
+		StrCopy(Unit, _countof(Unit), _T("MB"));
 	} else if (Memory < 1000ULL*1000*1000*1000) {
 		Value = Memory / (1000*1000*1000.0);
-		_tcscpy_s(Unit, _countof(Unit), _T("GB"));
+		StrCopy(Unit, _countof(Unit), _T("GB"));
 	} else {
 		Value = Memory / (1000*1000*1000*1000.0);
-		_tcscpy_s(Unit, _countof(Unit), _T("TB"));
+		StrCopy(Unit, _countof(Unit), _T("TB"));
 	}
 
-	_stprintf_s(Buffer, BufferSize, _T("% 8.1f %s"), Value, Unit);
+	StrPrintf(Buffer, BufferSize, _T("% 8.1f %s"), Value, Unit);
 }
 
 static void WriteBlankLine(void)
@@ -1136,9 +1134,9 @@ static void WriteProcessInfo(const process *Process, BOOL Highlighted)
 		TCHAR OffsetStr[256] = { 0 };
 		if(Process->TreeDepth > 0) {
 			for(DWORD i = 0; i < Process->TreeDepth-1; i++) {
-				_tcscat_s(OffsetStr, _countof(OffsetStr), _T("|  "));
+				StrCat(OffsetStr, _countof(OffsetStr), _T("|  "));
 			}
-			_tcscat_s(OffsetStr, _countof(OffsetStr), _T("`- "));
+			StrCat(OffsetStr, _countof(OffsetStr), _T("`- "));
 		}
 
 		CharsWritten = ConPrintf(_T("\n%7u  %9s  %3u  %04.1f%%  %s  %4u  % 03.1f MB/s  %s"),
@@ -1195,7 +1193,7 @@ typedef enum scroll_type {
 
 static void DoScroll(scroll_type ScrollType, BOOL *Redraw)
 {
-	ULONGLONG Now = GetTickCount64();
+	ULONGLONG Now = CompatGetTickCount64();
 	FollowProcess = FALSE;
 
 	if(!KeyPress) {
@@ -1267,7 +1265,7 @@ static void DoScroll(scroll_type ScrollType, BOOL *Redraw)
 
 		if(Scrolled) {
 			RedrawAtCursor = TRUE;
-			LastKeyPress = GetTickCount64();
+			LastKeyPress = CompatGetTickCount64();
 		}
 	}
 }
@@ -1416,7 +1414,7 @@ void SetViMessage(vi_message_type MessageType, TCHAR *Fmt, ...)
 	va_list VaList;
 
 	va_start(VaList, Fmt);
-	_vstprintf_s(ViMessage, DEFAULT_STR_SIZE, Fmt, VaList);
+	StrVPrintf(ViMessage, DEFAULT_STR_SIZE, Fmt, VaList);
 	va_end(VaList);
 }
 
@@ -1484,7 +1482,7 @@ static BOOLEAN CaretState;
 
 static void ResetCaret(void)
 {
-	CaretTicks = GetTickCount64();
+	CaretTicks = CompatGetTickCount64();
 	CaretState = TRUE;
 }
 
@@ -1672,7 +1670,7 @@ int _tmain(int argc, TCHAR *argv[])
 			case _T('u'):
 				if(++i < argc) {
 					FilterByUserName = TRUE;
-					_tcscpy_s(FilterUserName, UNLEN, argv[i]);
+					StrCopy(FilterUserName, UNLEN, argv[i]);
 				}
 				break;
 			case _T('d'):
@@ -1702,7 +1700,7 @@ int _tmain(int argc, TCHAR *argv[])
             TCHAR *Context;
             TCHAR *Token = _tcstok_s(argv[i], Delim, &Context);
             while(Token && NameFilterCount < MAX_NAMEPARTS) {
-              _tcsncpy_s(NameFilterList[NameFilterCount++], MAX_NAMEPARTSIZE+1, Token, MAX_NAMEPARTSIZE);
+              StrCopyN(NameFilterList[NameFilterCount++], MAX_NAMEPARTSIZE+1, Token, MAX_NAMEPARTSIZE);
               Token = _tcstok_s(0, Delim, &Context);
             }
 
@@ -1767,11 +1765,11 @@ int _tmain(int argc, TCHAR *argv[])
 
 	ProcessListThread = CreateThread(0, 0, PollProcessListThreadProc, 0, 0, 0);
 
-	ULONGLONG StartTicks = GetTickCount64();
+	ULONGLONG StartTicks = CompatGetTickCount64();
 
 	while(1) {
 #if _DEBUG
-		ULONGLONG T1 = GetTickCount64();
+		ULONGLONG T1 = CompatGetTickCount64();
 #endif
 		if (InteractiveMode) {
 			SetConCursorPos(0, 0);
@@ -1932,7 +1930,7 @@ int _tmain(int argc, TCHAR *argv[])
 		}
 
 #ifdef _DEBUG
-		ULONGLONG T2 = GetTickCount64();
+		ULONGLONG T2 = CompatGetTickCount64();
 
 		ULONG Diff = (ULONG)(T2 - T1);
 
@@ -1976,7 +1974,7 @@ int _tmain(int argc, TCHAR *argv[])
 				break;
 			}
 
-			ULONGLONG Now = GetTickCount64();
+			ULONGLONG Now = CompatGetTickCount64();
 
 			if(Now - StartTicks >= Config.RedrawInterval) {
 				PollSystemInfo();

@@ -18,7 +18,9 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <windows.h>
 #include <tchar.h>
+#include <stdarg.h>
 
 #ifdef _MSC_VER
 	#define NORETURN __declspec(noreturn)
@@ -29,6 +31,19 @@
 #endif
 
 NORETURN void Die(TCHAR *Fmt, ...);
+ULONGLONG CompatGetTickCount64(void);
+
+/*
+ * Truncating, always NUL-terminating replacements for the secure CRT string
+ * functions, which are missing from msvcrt.dll on XP. Argument order matches
+ * the _s originals (_tcscpy_s -> StrCopy, _tcsncpy_s -> StrCopyN, etc.).
+ */
+void StrCopy(TCHAR *Dest, size_t DestSize, const TCHAR *Src);
+void StrCopyN(TCHAR *Dest, size_t DestSize, const TCHAR *Src, size_t Count);
+void StrCat(TCHAR *Dest, size_t DestSize, const TCHAR *Src);
+int StrPrintf(TCHAR *Dest, size_t DestSize, const TCHAR *Fmt, ...);
+int StrVPrintf(TCHAR *Dest, size_t DestSize, const TCHAR *Fmt, va_list VaList);
+
 void *xmalloc(size_t size);
 void *xrealloc(void *ptr, size_t size);
 void *xcalloc(size_t num, size_t size);

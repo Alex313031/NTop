@@ -46,7 +46,7 @@ static void PushToHistory(TCHAR *Str)
 {
 	int Length = (int)_tcsclen(Str);
 	History[HistoryCount] = xmalloc(sizeof **History * (Length + 1));
-	_tcscpy_s(History[HistoryCount], Length+1, Str);
+	StrCopy(History[HistoryCount], Length+1, Str);
 	HistoryCount++;
 	HistoryIndex++;
 }
@@ -54,14 +54,14 @@ static void PushToHistory(TCHAR *Str)
 static void HistoryPrevious(TCHAR **Str)
 {
 	HistoryIndex--;
-	_tcscpy_s(*Str, DEFAULT_STR_SIZE, History[HistoryIndex]);
+	StrCopy(*Str, DEFAULT_STR_SIZE, History[HistoryIndex]);
 	InputIndex = (DWORD)_tcsclen(*Str);
 }
 
 static void HistoryNext(TCHAR **Str)
 {
 	HistoryIndex++;
-	_tcscpy_s(*Str, DEFAULT_STR_SIZE, History[HistoryIndex]);
+	StrCopy(*Str, DEFAULT_STR_SIZE, History[HistoryIndex]);
 	InputIndex = (DWORD)_tcsclen(*Str);
 }
 
@@ -126,7 +126,7 @@ COMMAND_FUNC(exec)
 	TCHAR CommandLine[4096] = { 0 };
 
 	for(DWORD i = 0; i < Argc; ++i) {
-		_tcscat_s(CommandLine, _countof(CommandLine), Argv[i]);
+		StrCat(CommandLine, _countof(CommandLine), Argv[i]);
 
 		if(i != Argc - 1) {
 			DWORD Length = (DWORD)_tcslen(CommandLine);
