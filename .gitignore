@@ -246,3 +246,7 @@ ModelManifest.xml
 
 ntop.exe
 *.swp
+
+# MinGW Makefile outputs
+*.o
+NTop.exe

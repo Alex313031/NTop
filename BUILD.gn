@@ -31,6 +31,17 @@ config("ntop_config") {
   cflags = []
   include_dirs = [ "./src" ]
 
+  cflags += [
+    "-mfpmath=sse",
+    "-msse2",
+  ]
+
+  libs = [
+    "advapi32",
+    "psapi",
+    "user32",
+  ]
+
   # Bump version here
   defines += [
     "NTOP_VER=0.3.22",
