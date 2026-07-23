@@ -1,0 +1,38 @@
+# Copyright (c) 2026 Alex313031
+
+# NTop: An Htop-like System Monitor for Windows NT with Vi-keybindings.
+
+# This BUILD.gn file is for porting NTop to GN/Ninja, specifically the gn-legacy build system,
+# to allow targeting legacy Windows. See https://github.com/Alex313031/gn-legacy
+
+executable("ntop") {
+  configs -= [ "//build/config/win:windowed_subsystem" ]
+  configs += [
+    "//build/config/win:console_subsystem",
+    "//build/config/win:unicode_base",
+    ":ntop_config",
+  ]
+
+  sources = [
+    "src/ntop.c",
+    "src/ntop.h",
+    "src/ntop.rc",
+    "src/util.c",
+    "src/util.h",
+    "src/vi.c",
+    "src/vi.h",
+  ]
+
+  output_name = "NTop"
+}
+
+config("ntop_config") {
+  defines = []
+  cflags = []
+  include_dirs = [ "./src" ]
+
+  # Bump version here
+  defines += [
+    "NTOP_VER=0.3.22",
+  ]
+}
