@@ -9,14 +9,16 @@ IF "%NTOP_VERSION%"=="" SET NTOP_VERSION=dev
 
 IF "%~1"=="-release" (
 	REM Release build
-    echo Release build
-	cl /DNTOP_VER="%NTOP_VERSION%" -W4 /GA /MT /O2 ..\ntop.c ..\util.c ..\vi.c Advapi32.lib User32.lib
+  echo NTop Release build
+	rc /nologo /fo ntop.res ..\src\ntop.rc
+	cl /DNTOP_VER="%NTOP_VERSION%" -W4 /GA /MT /O2 ..\src\ntop.c ..\src\util.c ..\src\vi.c ntop.res Advapi32.lib User32.lib
 ) else (
-    REM Debug build
-    echo Debug build
-    cl /DNTOP_VER=%NTOP_VERSION% -W4 /GA /MT /Z7 ..\ntop.c ..\util.c ..\vi.c Advapi32.lib User32.lib
+  REM Debug build
+  echo NTop Debug build
+  rc /nologo /D_DEBUG /fo ntop.res ..\src\ntop.rc
+  cl /DNTOP_VER=%NTOP_VERSION% -W4 /GA /MT /Z7 ..\src\ntop.c ..\src\util.c ..\src\vi.c ntop.res Advapi32.lib User32.lib
 )
 
-echo Built version %NTOP_VERSION%!
+echo Built NTop version %NTOP_VERSION%!
 
 popd

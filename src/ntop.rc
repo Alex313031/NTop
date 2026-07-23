@@ -1,0 +1,51 @@
+#define APSTUDIO_READONLY_SYMBOLS
+
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include <windows.h>
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+#include <winres.h>
+
+#ifdef __MINGW32__
+#include <winuser.h>
+#endif // __MINGW32__
+
+#undef APSTUDIO_READONLY_SYMBOLS
+
+101 ICON "ntop.ico"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0, 3, 22
+ PRODUCTVERSION 0, 3, 22
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+#ifdef _DEBUG
+ FILEFLAGS VS_FF_DEBUG // 0x00000001L // Debug build
+#else
+ FILEFLAGS 0x00000000L // Release build
+#endif  // _DEBUG
+ // Windows NT
+ FILEOS VOS_NT_WINDOWS32 // 0x00040004L
+ FILETYPE VFT_APP // 0x00000001L
+ FILESUBTYPE VFT2_UNKNOWN // 0x00000000L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0" // English Unicode
+        BEGIN
+            VALUE "Comments", "https://github.com/Alex313031/ntop"
+            VALUE "CompanyName", "Alex313031"
+            VALUE "FileDescription", "Htop-like system monitor."
+            VALUE "FileVersion", "0.3.22.0"
+            VALUE "InternalName", "ntop"
+            VALUE "LegalCopyright", L"\251 2026 Alex313031"
+            VALUE "LegalTrademarks", "GPL-3"
+            VALUE "OriginalFilename", "ntop.exe"
+            VALUE "ProductName", "NTop"
+            VALUE "ProductVersion", "0.3.22"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END
